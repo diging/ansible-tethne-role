@@ -1,0 +1,19 @@
+- name: populate static files
+  shell: source /var/opt/wsgi/tethne/env_secrets && /var/opt/wsgi/tethne/env/bin/python manage.py collectstatic --no-input
+  args:
+    chdir: /var/opt/wsgi/tethne/tethne
+  become: yes
+  become_user: tethne
+- name: migrate database
+  shell: source /var/opt/wsgi/tethne/env_secrets && /var/opt/wsgi/tethne/env/bin/python manage.py migrate
+  args:
+    chdir: /var/opt/wsgi/tethne/tethne
+  become: yes
+  become_user: tethne
+- name: create superuser in tethne
+  shell: source /var/opt/wsgi/tethne/env_secrets && echo "from django.contrib.auth.models import User; User.objects.filter(email='{{ django_admin_email}}').delete(); User.objects.create_superuser('{{ django_admin_user }}', '{{ django_admin_email }}', '{{ django_admin_password }}')" | /var/opt/wsgi/tethne/env/bin/python manage.py shell
+  args:
+    chdir: /var/opt/wsgi/tethne/tethne
+  become: yes
+  become_user: tethne
+  no_log: true

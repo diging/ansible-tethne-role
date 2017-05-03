@@ -1,0 +1,45 @@
+- name: create tethne user
+  user:
+    name: tethne
+    groups: webapps
+    state: present
+  become: yes
+- name: create project directory
+  file:
+    path: /var/opt/wsgi/tethne
+    state: directory
+    owner: tethne
+    group: webapps
+  become: yes
+- name: create app subdirectories
+  file:
+    path: /var/opt/wsgi/tethne/{{ item }}
+    state: directory
+    mode: "u=rwx,g=rwx,o=rx"
+    owner: tethne
+    group: webapps
+  become: yes
+  with_items:
+    - run
+    - bin
+    - logs
+    - static
+- name: allow nginx to read/write
+  command: chcon -Rt httpd_sys_content_t /var/opt/wsgi/tethne
+  become: yes
+- name: write secret environment variables
+  template:
+    src: env_secrets.j2
+    dest: /var/opt/wsgi/tethne/env_secrets
+    owner: tethne
+    group: webapps
+    mode: "u=rwx,g=,o="
+  become: yes
+- name: create celery worker log file
+  file:
+    path: /var/opt/wsgi/tethne/logs/celery-worker.log
+    state: touch
+    owner: tethne
+    group: webapps
+    mode: "u=rw,g=rw,o=r"
+  become: yes
